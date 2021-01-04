@@ -47,12 +47,18 @@ fn longest_len(v: &Vec<String>) -> usize {
 fn print_filenames(v: &Vec<String>, width: usize) {
 	let mut i = 0;
 
-	for filename in v {
-		if i != 0 && i % 6 == 0 {print!("\n");}
+	if v.len() < 13 {
+		for filename in v {
+			print!("{}  ", filename);
+		}
+	} else {
+		for filename in v {
+			if i != 0 && i % 6 == 0 {print!("\n");}
 
-		print!("{:-1$}", filename, width);
+			print!("{:-1$}", filename, width);
 
-		i += 1;
+			i += 1;
+		}
 	}
 }
 
@@ -103,10 +109,20 @@ fn main() {
 
 	let mut v = vec![];
 
+	if flags.a_flag {
+		v.push(String::from("."));
+		v.push(String::from(".."));
+	}
+
 	if let Ok(entries) = fs::read_dir(&path) {
 		for entry in entries {
 			if let Ok(entry) = entry {
-				v.push(entry.file_name().into_string().unwrap());
+				if entry.file_name().into_string().unwrap().starts_with('.') && 
+				!flags.a_flag {
+					continue;
+				} else {
+					v.push(entry.file_name().into_string().unwrap());
+				}
 			} else {
 				print!("Error.")
 			}
