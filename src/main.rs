@@ -62,29 +62,40 @@ fn print_filenames(v: &Vec<String>, width: usize) {
 	}
 }
 
-fn print_recursive(v: &Vec<String>, width: usize, path: &str, flags: &Flags) {
-	print!("{}:\n", path); 
-	print_filenames(v, width);
-	print!("\n\n");
+fn print_recursive(path: &str, width: usize, flags: &Flags) {
+	print!("{}:\n", path);
 
-	if let Ok(entries) = fs::read_dir(&path) {
-		for entry in entries {
-			if let Ok(entry) = entry {
-				if entry.file_name().into_string().unwrap().starts_with('.') 
-				&& flags.a_flag == false {
-					continue;
-				} else {
-					let current_path = entry.path();
-					if current_path.is_dir() {
-							print_recursive(
-								v, 
-								width, 
-								current_path.into_os_string().to_str().unwrap(),
-								flags
-							);
-					}
-				}
-			}
+	let mut file_vec = vec![];
+
+	for entry in fs::read_dir(path).unwrap() {
+		let current = entry.unwrap().file_name().into_string().unwrap();
+
+		if current.starts_with('.') && !flags.a_flag {
+			continue;
+		} else {
+			file_vec.push(current);
+		}
+	}
+
+	file_vec.sort_unstable();
+
+	for file in file_vec {
+		print!("{} ", file);
+	}
+	print!("\n");
+
+	for entry in fs::read_dir(path).unwrap() {
+		let path_buf = entry.unwrap().path();
+		let file_path = path_buf.display().to_string();
+		let attrib = fs::metadata(&file_path).unwrap();
+
+		if !flags.a_flag && file_path.starts_with("./.") {
+			continue;
+		}
+
+		if attrib.is_dir() {
+			print!("\n");
+			print_recursive(&file_path, width, flags);
 		}
 	}
 }
@@ -134,9 +145,9 @@ fn main() {
 	v.sort_unstable();
 
 	if flags.R_flag {
-		print_recursive(&v, width, &path, &flags);
+		print_recursive(&path, width, &flags);
 	} else {
 		print_filenames(&v, width);
+		print!("\n");
 	}
-	print!("\n");
 }
