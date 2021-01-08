@@ -33,15 +33,18 @@ impl Flags {
 }
 
 fn longest_len(v: &Vec<String>) -> usize {
-	let mut result = v[0].len();
+	if v.is_empty() {
+		0
+	} else {
+		let mut result = v[0].len();
 
-	for element in v.iter() {
-		if element.len() > result {
-			result = element.len();
+		for element in v.iter() {
+			if element.len() > result {
+				result = element.len();
+			}
 		}
+		result
 	}
-
-	result
 }
 
 fn print_filenames(v: &Vec<String>, width: usize) {
@@ -79,9 +82,12 @@ fn print_recursive(path: &str, width: usize, flags: &Flags) {
 
 	file_vec.sort_unstable();
 
-	for file in file_vec {
-		print!("{} ", file);
-	}
+	let width_rec = longest_len(&file_vec);
+
+//	for file in file_vec {
+//		print!("{} ", file);
+		print_filenames(&file_vec, width_rec);
+//	}
 	print!("\n");
 
 	for entry in fs::read_dir(path).unwrap() {
