@@ -1,5 +1,9 @@
 #![allow(non_snake_case)]
+extern crate chrono;
+use chrono::{DateTime, TimeZone, Utc};
 use std::{fs, env};
+use std::os::linux::fs::MetadataExt;
+use std::time::UNIX_EPOCH;
 
 struct Flags {
 	l_flag: bool,
@@ -84,10 +88,7 @@ fn print_recursive(path: &str, width: usize, flags: &Flags) {
 
 	let width_rec = longest_len(&file_vec);
 
-//	for file in file_vec {
-//		print!("{} ", file);
-		print_filenames(&file_vec, width_rec);
-//	}
+	print_filenames(&file_vec, width_rec);
 	print!("\n");
 
 	for entry in fs::read_dir(path).unwrap() {
@@ -102,6 +103,30 @@ fn print_recursive(path: &str, width: usize, flags: &Flags) {
 		if attrib.is_dir() {
 			print!("\n");
 			print_recursive(&file_path, width, flags);
+		}
+	}
+}
+
+fn print_long(v: &Vec<String>) {
+	for filename in v {
+		if let Ok(metadata) = fs::metadata(filename) {
+			if metadata.is_dir() { print!("d"); } else { print!("-"); }
+			print!("---------"); //PERMISSIONS TBI
+			print!(" X"); //NUMBER OF HARD LINKS TBI
+			print!(" {}", metadata.st_uid()); //PRINTING USERNAME AND GROUP NAME
+			print!(" {}", metadata.st_gid()); //INSTEAD OF IDS TBI
+			print!(" {:-1$}", metadata.len(), 4);
+			if let Ok(modtime) = metadata.modified() {
+				let seconds = modtime.duration_since(UNIX_EPOCH).unwrap().as_secs() as i64;
+				let dt = Utc.timestamp(seconds, 0);
+				print!(" {}", dt.format("%b"));
+				print!(" {}", dt.format("%d %H:%M"));
+			} else {
+				panic!("Error getting modification time.");
+			}
+			print!(" {}\n", filename);
+		} else {
+			panic!("Error getting file metadata.");
 		}
 	}
 }
@@ -123,6 +148,8 @@ fn main() {
 			path = arg;
 		}
 	}
+
+	println!("path is: {}", path);
 
 	let mut v = vec![];
 
@@ -152,6 +179,8 @@ fn main() {
 
 	if flags.R_flag {
 		print_recursive(&path, width, &flags);
+	} else if flags.l_flag {
+		print_long(&v);
 	} else {
 		print_filenames(&v, width);
 		print!("\n");
