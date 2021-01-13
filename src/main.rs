@@ -1,6 +1,6 @@
 #![allow(non_snake_case)]
 extern crate chrono;
-use chrono::{DateTime, TimeZone, Utc};
+use chrono::{TimeZone, Utc};
 use std::{fs, env};
 use std::os::linux::fs::MetadataExt;
 use std::time::UNIX_EPOCH;
@@ -148,8 +148,6 @@ fn main() {
 			path = arg;
 		}
 	}
-
-	println!("path is: {}", path);
 
 	let mut v = vec![];
 
