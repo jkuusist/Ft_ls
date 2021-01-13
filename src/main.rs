@@ -107,9 +107,11 @@ fn print_recursive(path: &str, width: usize, flags: &Flags) {
 	}
 }
 
-fn print_long(v: &Vec<String>) {
+fn print_long(v: &Vec<String>, path: &str) {
 	for filename in v {
-		if let Ok(metadata) = fs::metadata(filename) {
+		let file_path = &format!("{}/{}", path, filename);
+
+		if let Ok(metadata) = fs::metadata(file_path) {
 			if metadata.is_dir() { print!("d"); } else { print!("-"); }
 			print!("---------"); //PERMISSIONS TBI
 			print!(" X"); //NUMBER OF HARD LINKS TBI
@@ -178,7 +180,7 @@ fn main() {
 	if flags.R_flag {
 		print_recursive(&path, width, &flags);
 	} else if flags.l_flag {
-		print_long(&v);
+		print_long(&v, &path);
 	} else {
 		print_filenames(&v, width);
 		print!("\n");
