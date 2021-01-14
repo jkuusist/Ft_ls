@@ -126,7 +126,13 @@ fn print_long(v: &Vec<String>, path: &str) {
 			} else {
 				panic!("Error getting modification time.");
 			}
-			print!(" {}\n", filename);
+			print!(" {}", filename);
+
+			if let Ok(link_to) = fs::read_link(file_path) {
+				print!(" -> {}", link_to.display());
+			}
+
+			print!("\n");
 		} else {
 			panic!("Error getting file metadata.");
 		}
