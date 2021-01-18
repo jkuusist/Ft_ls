@@ -111,7 +111,7 @@ fn print_long(v: &Vec<String>, path: &str) {
 	for filename in v {
 		let file_path = &format!("{}/{}", path, filename);
 
-		if let Ok(metadata) = fs::metadata(file_path) {
+		if let Ok(metadata) = fs::symlink_metadata(file_path) {
 			if metadata.is_dir() { print!("d"); } else { print!("-"); }
 			print!("---------"); //PERMISSIONS TBI
 			print!(" X"); //NUMBER OF HARD LINKS TBI
@@ -131,9 +131,9 @@ fn print_long(v: &Vec<String>, path: &str) {
 			if let Ok(link_to) = fs::read_link(file_path) {
 				print!(" -> {}", link_to.display());
 			}
-
 			print!("\n");
 		} else {
+			println!("Panic at: {}", file_path);
 			panic!("Error getting file metadata.");
 		}
 	}
