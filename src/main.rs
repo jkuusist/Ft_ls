@@ -113,7 +113,15 @@ fn print_long(v: &Vec<String>, path: &str) {
 		let file_path = &format!("{}/{}", path, filename);
 
 		if let Ok(metadata) = fs::symlink_metadata(file_path) {
-			if metadata.is_dir() { print!("d"); } else { print!("-"); }
+//			println!("file_type is {:?}", metadata.file_type());
+
+			if metadata.is_dir() {
+				print!("d"); 
+			} else if metadata.file_type().is_symlink() {
+				print!("l"); 
+			} else {
+				print!("-"); 
+			}
 //			print!(" {:o}", metadata.permissions().mode());
 
 			print_permissions(metadata.permissions().mode());
@@ -206,7 +214,7 @@ fn main() {
 
 	let width = longest_len(&v) + 1;
 
-	v.sort_unstable();
+	v.sort_by(|a, b| a.to_lowercase().cmp(&b.to_lowercase()));
 
 	if flags.R_flag {
 		print_recursive(&path, width, &flags);
