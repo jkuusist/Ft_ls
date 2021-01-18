@@ -3,6 +3,7 @@ extern crate chrono;
 use chrono::{TimeZone, Utc};
 use std::{fs, env};
 use std::os::linux::fs::MetadataExt;
+use std::os::unix::fs::PermissionsExt;
 use std::time::UNIX_EPOCH;
 
 struct Flags {
@@ -113,7 +114,10 @@ fn print_long(v: &Vec<String>, path: &str) {
 
 		if let Ok(metadata) = fs::symlink_metadata(file_path) {
 			if metadata.is_dir() { print!("d"); } else { print!("-"); }
-			print!("---------"); //PERMISSIONS TBI
+//			print!(" {:o}", metadata.permissions().mode());
+
+			print_permissions(metadata.permissions().mode());
+
 			print!(" X"); //NUMBER OF HARD LINKS TBI
 			print!(" {}", metadata.st_uid()); //PRINTING USERNAME AND GROUP NAME
 			print!(" {}", metadata.st_gid()); //INSTEAD OF IDS TBI
@@ -133,10 +137,31 @@ fn print_long(v: &Vec<String>, path: &str) {
 			}
 			print!("\n");
 		} else {
-			println!("Panic at: {}", file_path);
 			panic!("Error getting file metadata.");
 		}
 	}
+}
+
+fn get_bit(mode: u32, index: u8) -> bool {
+//	println!("mode is: {}\n1 << {} is: {}", mode, index, 1 << index);
+
+	if index < 32 {
+		mode & (1 << index) != 0
+	} else {
+		panic!("Bit index out of bounds.");
+	}
+}
+
+fn print_permissions(mode: u32) {
+	if get_bit(mode, 8) { print!("r"); } else { print!("-"); }
+	if get_bit(mode, 7) { print!("w"); } else { print!("-"); }
+	if get_bit(mode, 6) { print!("x"); } else { print!("-"); }
+	if get_bit(mode, 5) { print!("r"); } else { print!("-"); }
+	if get_bit(mode, 4) { print!("w"); } else { print!("-"); }
+	if get_bit(mode, 3) { print!("x"); } else { print!("-"); }
+	if get_bit(mode, 2) { print!("r"); } else { print!("-"); }
+	if get_bit(mode, 1) { print!("w"); } else { print!("-"); }
+	if get_bit(mode, 0) { print!("x"); } else { print!("-"); }
 }
 
 fn main() {
