@@ -7,6 +7,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cdb031dd78e28731d87d56cc8ffef4a8f36ca26c38fe2de700543e627f8a464a"
 
 [[package]]
+name = "cfg-if"
+version = "0.1.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4785bdd1c96b2a846b2bd7cc02e86b6b3dbf14e7e53446c4f54c92a361040822"
+
+[[package]]
 name = "chrono"
 version = "0.4.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -24,6 +30,7 @@ name = "ft_ls"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "users",
 ]
 
 [[package]]
@@ -31,6 +38,15 @@ name = "libc"
 version = "0.2.82"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "89203f3fba0a3795506acaad8ebce3c80c0af93f994d5a1d7a0b1eeb23271929"
+
+[[package]]
+name = "log"
+version = "0.4.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fcf3805d4480bb5b86070dcfeb9e2cb2ebc148adb753c5cca5f884d1d65a42b2"
+dependencies = [
+ "cfg-if",
+]
 
 [[package]]
 name = "num-integer"
@@ -60,6 +76,16 @@ dependencies = [
  "libc",
  "wasi",
  "winapi",
+]
+
+[[package]]
+name = "users"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "24cc0f6d6f267b73e5a2cadf007ba8f9bc39c6a6f9666f8cf25ea809a153b032"
+dependencies = [
+ "libc",
+ "log",
 ]
 
 [[package]]

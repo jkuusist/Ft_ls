@@ -1,9 +1,8 @@
 #![allow(non_snake_case)]
-extern crate chrono;
 use chrono::{TimeZone, Utc};
+use users::get_user_by_uid;
 use std::{fs, env};
-use std::os::linux::fs::MetadataExt;
-use std::os::unix::fs::PermissionsExt;
+use std::os::unix::fs::{PermissionsExt, MetadataExt};
 use std::time::UNIX_EPOCH;
 
 struct Flags {
@@ -113,8 +112,6 @@ fn print_long(v: &Vec<String>, path: &str) {
 		let file_path = &format!("{}/{}", path, filename);
 
 		if let Ok(metadata) = fs::symlink_metadata(file_path) {
-//			println!("file_type is {:?}", metadata.file_type());
-
 			if metadata.is_dir() {
 				print!("d"); 
 			} else if metadata.file_type().is_symlink() {
@@ -122,13 +119,13 @@ fn print_long(v: &Vec<String>, path: &str) {
 			} else {
 				print!("-"); 
 			}
-//			print!(" {:o}", metadata.permissions().mode());
 
 			print_permissions(metadata.permissions().mode());
 
-			print!(" X"); //NUMBER OF HARD LINKS TBI
-			print!(" {}", metadata.st_uid()); //PRINTING USERNAME AND GROUP NAME
-			print!(" {}", metadata.st_gid()); //INSTEAD OF IDS TBI
+			print!(" {}", metadata.nlink());
+			print!(" {}", get_user_by_uid(metadata.uid()).unwrap().name().to_str().unwrap());
+			print!(" {}", get_user_by_uid(metadata.uid()).unwrap().groups()
+				.unwrap()[0].name().to_str().unwrap());
 			print!(" {:-1$}", metadata.len(), 4);
 			if let Ok(modtime) = metadata.modified() {
 				let seconds = modtime.duration_since(UNIX_EPOCH).unwrap().as_secs() as i64;
