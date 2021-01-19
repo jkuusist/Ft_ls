@@ -130,8 +130,7 @@ fn print_long(v: &Vec<String>, path: &str) {
 			if let Ok(modtime) = metadata.modified() {
 				let seconds = modtime.duration_since(UNIX_EPOCH).unwrap().as_secs() as i64;
 				let dt = Utc.timestamp(seconds, 0);
-				print!(" {}", dt.format("%b"));
-				print!(" {}", dt.format("%d %H:%M"));
+				print!(" {}", dt.format("%b %e %H:%M"));
 			} else {
 				panic!("Error getting modification time.");
 			}
@@ -148,8 +147,6 @@ fn print_long(v: &Vec<String>, path: &str) {
 }
 
 fn get_bit(mode: u32, index: u8) -> bool {
-//	println!("mode is: {}\n1 << {} is: {}", mode, index, 1 << index);
-
 	if index < 32 {
 		mode & (1 << index) != 0
 	} else {
