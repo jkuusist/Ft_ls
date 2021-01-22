@@ -1,6 +1,7 @@
 #![allow(non_snake_case)]
 use chrono::{TimeZone, Utc};
 use users::get_user_by_uid;
+use term_size;
 use std::{fs, env};
 use std::os::unix::fs::{PermissionsExt, MetadataExt};
 use std::time::UNIX_EPOCH;
@@ -51,19 +52,43 @@ fn longest_len(v: &Vec<String>) -> usize {
 	}
 }
 
-fn print_filenames(v: &Vec<String>, width: usize) {
-	let mut i = 0;
+fn print_filenames(v: &Vec<String>, output_length: usize, width: usize) {
+	let (terminal_width, _) = term_size::dimensions().unwrap();
 
-	if v.len() < 13 {
+	if output_length <= terminal_width {
 		for filename in v {
 			print!("{}  ", filename);
 		}
 	} else {
-		for filename in v {
-			if i != 0 && i % 6 == 0 {print!("\n");}
+		let num_columns = terminal_width / width;
 
-			print!("{:-1$}", filename, width);
+		let num_rows = v.len() / num_columns;
 
+		let mut matrix = vec![vec![]; num_columns];
+
+		let mut i = 0;
+		let mut j;
+		let mut v_index = 0;
+
+		while i < num_columns {
+			j = 0;
+			while j < num_rows {
+				matrix[i].push(&v[v_index]);
+				v_index += 1;
+				j += 1;
+			}
+			i += 1;
+		}
+
+		i = 0;
+		while i < matrix[i].len(){
+			let mut j = 0;
+			while j < matrix.len() {
+				print!("{}  ", matrix[j][i]);
+
+				j += 1;
+			}
+			print!("\n");
 			i += 1;
 		}
 	}
@@ -85,10 +110,19 @@ fn print_recursive(path: &str, width: usize, flags: &Flags) {
 	}
 
 	file_vec.sort_unstable();
+	let mut output_length_rec = 0;
+
+	for filename in &file_vec {
+		output_length_rec += filename.len() + 2;
+	}
 
 	let width_rec = longest_len(&file_vec);
 
-	print_filenames(&file_vec, width_rec);
+	if flags.l_flag {
+		print_long(&file_vec, path);
+	} else {
+		print_filenames(&file_vec, output_length_rec, width_rec);
+	}
 	print!("\n");
 
 	for entry in fs::read_dir(path).unwrap() {
@@ -207,6 +241,10 @@ fn main() {
 	}
 
 	let width = longest_len(&v) + 1;
+	let mut output_length = 0;
+	for filename in &v {
+		output_length += filename.len() + 2;
+	}
 
 	v.sort_by(|a, b| a.to_lowercase().cmp(&b.to_lowercase()));
 
@@ -215,7 +253,7 @@ fn main() {
 	} else if flags.l_flag {
 		print_long(&v, &path);
 	} else {
-		print_filenames(&v, width);
+		print_filenames(&v, output_length, width);
 		print!("\n");
 	}
 }
