@@ -59,10 +59,13 @@ fn print_filenames(v: &Vec<String>, output_length: usize, width: usize) {
 		for filename in v {
 			print!("{}  ", filename);
 		}
+		print!("\n");
 	} else {
-		let num_columns = terminal_width / width;
+		let mut num_columns = terminal_width / width;
 
 		let num_rows = v.len() / num_columns;
+
+		if v.len() % 2 != 0 { num_columns += 1 };
 
 		let mut matrix = vec![vec![]; num_columns];
 
@@ -72,7 +75,7 @@ fn print_filenames(v: &Vec<String>, output_length: usize, width: usize) {
 
 		while i < num_columns {
 			j = 0;
-			while j < num_rows {
+			while j < num_rows && v_index < v.len() {
 				matrix[i].push(&v[v_index]);
 				v_index += 1;
 				j += 1;
@@ -83,8 +86,18 @@ fn print_filenames(v: &Vec<String>, output_length: usize, width: usize) {
 		i = 0;
 		while i < matrix[i].len(){
 			let mut j = 0;
+
 			while j < matrix.len() {
-				print!("{}  ", matrix[j][i]);
+				let mut col_width = matrix[j][0].len();
+
+				for row in 0..num_rows {
+					if row < matrix[j].len() && matrix[j][row].len() > col_width {
+						col_width = matrix[j][row].len();
+					}
+				}
+				if i < matrix[j].len() {
+					print!("{:1$}  ", matrix[j][i], col_width);
+				}
 
 				j += 1;
 			}
@@ -254,6 +267,6 @@ fn main() {
 		print_long(&v, &path);
 	} else {
 		print_filenames(&v, output_length, width);
-		print!("\n");
+//		print!("\n");
 	}
 }
