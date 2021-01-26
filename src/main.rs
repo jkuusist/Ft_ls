@@ -213,6 +213,33 @@ fn print_permissions(mode: u32) {
 	if get_bit(mode, 0) { print!("x"); } else { print!("-"); }
 }
 
+fn sort_by_mod_time(v: &mut Vec<String>, low: usize, high: usize) {
+	if low < high {
+		let p = partition(v, low, high);
+		sort_by_mod_time(v, low, p - 1);
+		sort_by_mod_time(v, p + 1, high);
+	}
+}
+
+fn partition(v: &mut Vec<String>, low: usize, high: usize) -> usize {
+	let pivot = fs::symlink_metadata(&v[high]).unwrap().modified().unwrap();
+
+	let mut i = low;
+	let mut j = low;
+	while j < high {
+		let comp = fs::symlink_metadata(&v[j]).unwrap().modified().unwrap();
+		if comp > pivot {
+			v.swap(i, j);
+
+			i += 1;
+		}
+		j += 1;
+	}
+	v.swap(i, high);
+
+	i
+}
+
 fn main() {
 	let mut path = String::from(".");
 	let mut flags = Flags::new();
@@ -259,7 +286,12 @@ fn main() {
 		output_length += filename.len() + 2;
 	}
 
-	v.sort_by(|a, b| a.to_lowercase().cmp(&b.to_lowercase()));
+	if flags.t_flag {
+		let v_high = v.len() - 1;
+		sort_by_mod_time(&mut v, 0, v_high);
+	} else {
+		v.sort_by(|a, b| a.to_lowercase().cmp(&b.to_lowercase()));
+	}
 
 	if flags.R_flag {
 		print_recursive(&path, width, &flags);
