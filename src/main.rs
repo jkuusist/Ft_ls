@@ -155,42 +155,60 @@ fn print_recursive(path: &str, width: usize, flags: &Flags) {
 }
 
 fn print_long(v: &Vec<String>, path: &str) {
+	let mut output = String::with_capacity(25);
+	let mut total_blocks = 0;
+
 	for filename in v {
 		let file_path = &format!("{}/{}", path, filename);
 
 		if let Ok(metadata) = fs::symlink_metadata(file_path) {
+			total_blocks += metadata.blocks();
+
 			if metadata.is_dir() {
-				print!("d"); 
+				output.push('d');
 			} else if metadata.file_type().is_symlink() {
-				print!("l"); 
+				output.push('l');
 			} else {
-				print!("-"); 
+				output.push('-');
 			}
 
-			print_permissions(metadata.permissions().mode());
+			push_permissions(metadata.permissions().mode(), &mut output);
 
-			print!(" {}", metadata.nlink());
-			print!(" {}", get_user_by_uid(metadata.uid()).unwrap().name().to_str().unwrap());
-			print!(" {}", get_user_by_uid(metadata.uid()).unwrap().groups()
+			output.push(' ');
+			output.push_str(&metadata.nlink().to_string());
+
+			output.push(' ');
+			output.push_str(get_user_by_uid(metadata.uid()).unwrap().name().to_str().unwrap());
+			output.push(' ');
+			output.push_str(get_user_by_uid(metadata.uid()).unwrap().groups()
 				.unwrap()[0].name().to_str().unwrap());
-			print!(" {:-1$}", metadata.len(), 4);
+
+			output.push_str(&format!(" {:-1$}", metadata.len(), 4));
+
 			if let Ok(modtime) = metadata.modified() {
 				let seconds = modtime.duration_since(UNIX_EPOCH).unwrap().as_secs() as i64;
 				let dt = Utc.timestamp(seconds, 0);
-				print!(" {}", dt.format("%b %e %H:%M"));
+				output.push(' ');
+				output.push_str(&dt.format("%b %e %H:%M").to_string());
+
 			} else {
 				panic!("Error getting modification time.");
 			}
-			print!(" {}", filename);
+
+			output.push(' ');
+			output.push_str(filename);
 
 			if let Ok(link_to) = fs::read_link(file_path) {
-				print!(" -> {}", link_to.display());
+				output.push_str(&format!(" -> {}", link_to.display()));
 			}
-			print!("\n");
+			output.push('\n');
 		} else {
 			panic!("Error getting file metadata.");
 		}
 	}
+
+	println!("total {}", total_blocks / 2);
+	print!("{}", output);
 }
 
 fn get_bit(mode: u32, index: u8) -> bool {
@@ -201,6 +219,18 @@ fn get_bit(mode: u32, index: u8) -> bool {
 	}
 }
 
+fn push_permissions(mode: u32, output: &mut String) {
+	if get_bit(mode, 8) { output.push('r'); } else { output.push('-'); }
+	if get_bit(mode, 7) { output.push('w'); } else { output.push('-'); }
+	if get_bit(mode, 6) { output.push('x'); } else { output.push('-'); }
+	if get_bit(mode, 5) { output.push('r'); } else { output.push('-'); }
+	if get_bit(mode, 4) { output.push('w'); } else { output.push('-'); }
+	if get_bit(mode, 3) { output.push('x'); } else { output.push('-'); }
+	if get_bit(mode, 2) { output.push('r'); } else { output.push('-'); }
+	if get_bit(mode, 1) { output.push('w'); } else { output.push('-'); }
+	if get_bit(mode, 0) { output.push('x'); } else { output.push('-'); }
+}
+/*
 fn print_permissions(mode: u32) {
 	if get_bit(mode, 8) { print!("r"); } else { print!("-"); }
 	if get_bit(mode, 7) { print!("w"); } else { print!("-"); }
@@ -212,7 +242,7 @@ fn print_permissions(mode: u32) {
 	if get_bit(mode, 1) { print!("w"); } else { print!("-"); }
 	if get_bit(mode, 0) { print!("x"); } else { print!("-"); }
 }
-
+*/
 fn sort_by_mod_time(v: &mut Vec<String>, low: usize, high: usize) {
 	if low < high {
 		let p = partition(v, low, high);
