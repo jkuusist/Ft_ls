@@ -1,7 +1,6 @@
 #![allow(non_snake_case)]
 use chrono::{TimeZone, Utc};
 use users::get_user_by_uid;
-use term_size;
 use std::{fs, env};
 use std::os::unix::fs::{PermissionsExt, MetadataExt};
 use std::time::UNIX_EPOCH;
@@ -38,7 +37,7 @@ impl Flags {
 	}
 }
 
-fn longest_len(v: &Vec<String>) -> usize {
+fn longest_len(v: &[String]) -> usize {
 	if v.is_empty() {
 		0
 	} else {
@@ -53,14 +52,14 @@ fn longest_len(v: &Vec<String>) -> usize {
 	}
 }
 
-fn print_filenames(v: &Vec<String>, output_length: usize, width: usize) {
+fn print_filenames(v: &[String], output_length: usize, width: usize) {
 	let (terminal_width, _) = term_size::dimensions().unwrap();
 
 	if output_length <= terminal_width {
 		for filename in v {
 			print!("{}  ", filename);
 		}
-		print!("\n");
+		println!();
 	} else {
 		let mut num_columns = terminal_width / width;
 
@@ -103,14 +102,14 @@ fn print_filenames(v: &Vec<String>, output_length: usize, width: usize) {
 
 				j += 1;
 			}
-			print!("\n");
+			println!();
 			i += 1;
 		}
 	}
 }
 
 fn print_recursive(path: &str, width: usize, flags: &Flags) {
-	print!("{}:\n", path);
+	println!("{}:", path);
 
 	let mut file_vec = vec![];
 
@@ -139,7 +138,7 @@ fn print_recursive(path: &str, width: usize, flags: &Flags) {
 	} else {
 		print_filenames(&file_vec, output_length_rec, width_rec);
 	}
-	print!("\n");
+	println!();
 
 	for entry in fs::read_dir(path).unwrap() {
 		let path_buf = entry.unwrap().path();
@@ -151,13 +150,13 @@ fn print_recursive(path: &str, width: usize, flags: &Flags) {
 		}
 
 		if attrib.is_dir() {
-			print!("\n");
+			println!();
 			print_recursive(&file_path, width, flags);
 		}
 	}
 }
 
-fn print_long(v: &Vec<String>, path: &str) {
+fn print_long(v: &[String], path: &str) {
 	let mut output = String::with_capacity(v.len() * 54);
 	let mut total_blocks = 0;
 
@@ -323,7 +322,8 @@ fn main() {
 		let v_high = v.len() - 1;
 		sort_by_mod_time(&mut v, 0, v_high);
 	} else {
-		v.sort_by(|a, b| a.to_lowercase().cmp(&b.to_lowercase()));
+//		v.sort_by(|a, b| a.to_lowercase().cmp(&b.to_lowercase()));
+		v.sort_unstable_by_key(|a| a.to_lowercase());
 	}
 
 	if flags.R_flag {
