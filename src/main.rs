@@ -5,6 +5,7 @@ use term_size;
 use std::{fs, env};
 use std::os::unix::fs::{PermissionsExt, MetadataExt};
 use std::time::UNIX_EPOCH;
+//use std::time::{Duration, Instant};
 
 struct Flags {
 	l_flag: bool,
@@ -84,7 +85,8 @@ fn print_filenames(v: &Vec<String>, output_length: usize, width: usize) {
 		}
 
 		i = 0;
-		while i < matrix[i].len(){
+
+		while i < matrix.len() && i < matrix[i].len() {
 			let mut j = 0;
 
 			while j < matrix.len() {
@@ -123,6 +125,7 @@ fn print_recursive(path: &str, width: usize, flags: &Flags) {
 	}
 
 	file_vec.sort_unstable();
+
 	let mut output_length_rec = 0;
 
 	for filename in &file_vec {
@@ -155,7 +158,7 @@ fn print_recursive(path: &str, width: usize, flags: &Flags) {
 }
 
 fn print_long(v: &Vec<String>, path: &str) {
-	let mut output = String::with_capacity(25);
+	let mut output = String::with_capacity(v.len() * 54);
 	let mut total_blocks = 0;
 
 	for filename in v {
