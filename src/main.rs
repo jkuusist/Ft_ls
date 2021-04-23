@@ -4,7 +4,6 @@ use users::get_user_by_uid;
 use std::{fs, env};
 use std::os::unix::fs::{PermissionsExt, MetadataExt};
 use std::time::UNIX_EPOCH;
-//use std::time::{Duration, Instant};
 
 struct Flags {
 	l_flag: bool,
@@ -55,7 +54,7 @@ fn longest_len(v: &[String]) -> usize {
 fn print_filenames(v: &[String], output_length: usize, width: usize) {
 	let (terminal_width, _) = term_size::dimensions().unwrap();
 
-	if output_length <= terminal_width {
+	if v.len() == 1 || output_length <= terminal_width {
 		for filename in v {
 			print!("{}  ", filename);
 		}
@@ -63,11 +62,15 @@ fn print_filenames(v: &[String], output_length: usize, width: usize) {
 	} else {
 		let mut num_columns = terminal_width / width;
 
+		if terminal_width % width != 0 { num_columns += 1  };
+
 		let num_rows = v.len() / num_columns;
 
-		if v.len() % 2 != 0 { num_columns += 1 };
+		if v.len() % num_columns != 0 { num_columns += 1  };
 
-		let mut matrix = vec![vec![]; num_columns];
+//		println!("columns: {}. rows: {}", num_columns, num_rows);
+	
+		let mut matrix = vec![Vec::with_capacity(num_rows); num_columns];
 
 		let mut i = 0;
 		let mut j;
@@ -77,33 +80,34 @@ fn print_filenames(v: &[String], output_length: usize, width: usize) {
 			j = 0;
 			while j < num_rows && v_index < v.len() {
 				matrix[i].push(&v[v_index]);
+
 				v_index += 1;
 				j += 1;
 			}
 			i += 1;
 		}
 
-		i = 0;
+		let mut col_index;
+		let mut row_index = 0;
 
-		while i < matrix.len() && i < matrix[i].len() {
-			let mut j = 0;
+		while row_index < num_rows {
+			col_index = 0;
 
-			while j < matrix.len() {
-				let mut col_width = matrix[j][0].len();
+			while col_index < num_columns && row_index < matrix[col_index].len() {
+				let mut col_width = matrix[col_index][0].len();
 
-				for row in 0..num_rows {
-					if row < matrix[j].len() && matrix[j][row].len() > col_width {
-						col_width = matrix[j][row].len();
+				for filename in &matrix[col_index] {
+					if filename.len() > col_width {
+						col_width = filename.len();
 					}
 				}
-				if i < matrix[j].len() {
-					print!("{:1$}  ", matrix[j][i], col_width);
-				}
 
-				j += 1;
+				print!("{:1$}  ", matrix[col_index][row_index], col_width);
+
+				col_index += 1;
 			}
 			println!();
-			i += 1;
+			row_index += 1;
 		}
 	}
 }
@@ -232,19 +236,7 @@ fn push_permissions(mode: u32, output: &mut String) {
 	if get_bit(mode, 1) { output.push('w'); } else { output.push('-'); }
 	if get_bit(mode, 0) { output.push('x'); } else { output.push('-'); }
 }
-/*
-fn print_permissions(mode: u32) {
-	if get_bit(mode, 8) { print!("r"); } else { print!("-"); }
-	if get_bit(mode, 7) { print!("w"); } else { print!("-"); }
-	if get_bit(mode, 6) { print!("x"); } else { print!("-"); }
-	if get_bit(mode, 5) { print!("r"); } else { print!("-"); }
-	if get_bit(mode, 4) { print!("w"); } else { print!("-"); }
-	if get_bit(mode, 3) { print!("x"); } else { print!("-"); }
-	if get_bit(mode, 2) { print!("r"); } else { print!("-"); }
-	if get_bit(mode, 1) { print!("w"); } else { print!("-"); }
-	if get_bit(mode, 0) { print!("x"); } else { print!("-"); }
-}
-*/
+
 fn sort_by_mod_time(v: &mut Vec<String>, low: usize, high: usize) {
 	if low < high {
 		let p = partition(v, low, high);
@@ -312,6 +304,8 @@ fn main() {
 		}
 	}
 
+//	println!("v.len() is {}", v.len());
+
 	let width = longest_len(&v) + 1;
 	let mut output_length = 0;
 	for filename in &v {
@@ -322,9 +316,10 @@ fn main() {
 		let v_high = v.len() - 1;
 		sort_by_mod_time(&mut v, 0, v_high);
 	} else {
-//		v.sort_by(|a, b| a.to_lowercase().cmp(&b.to_lowercase()));
 		v.sort_unstable_by_key(|a| a.to_lowercase());
 	}
+
+//	println!("v is: {:?}", v);
 
 	if flags.R_flag {
 		print_recursive(&path, width, &flags);
@@ -332,6 +327,5 @@ fn main() {
 		print_long(&v, &path);
 	} else {
 		print_filenames(&v, output_length, width);
-//		print!("\n");
 	}
 }
